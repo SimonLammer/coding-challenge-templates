@@ -47,11 +47,12 @@ CONFIG = None # will be generated via argparse
 def process(filename: str) -> Any:
   with open(filename, 'r') as fin:
     with open(f'{".".join(filename.split(".")[:-1])}.out', 'w') as fout:
+      # Process a few lines manually here before looping line-by-line
       # n = int(next(fout))
       for line in tqdm(fin, f'{filename} lines'):
         line = line.rstrip()
 
-        # TODO: process input file line-by-line here
+        # Process input file line-by-line here
 
         out = f"{line}"
         fout.write(f"{out}\n")
@@ -61,17 +62,22 @@ def process(filename: str) -> Any:
 def test() -> None:
   tests = {
     # <function>: (test1, test2, ...)
-    lambda *args: list(range(*args)): (
-      # TODO: add tests here
-      ((1,), [0]),
-      ((1, 1), []),
-      ((1, 3), [1, 2]),
-    ),
     int: (
-      # TODO: add tests here
+      # Add tests here
       (("4",), 4),
     ),
-    # TODO: add tests for other functions here
+    # Add tests for other functions here
+    lambda *args: list(range(*args)): (
+      ((1,), [0]),
+      ((1, 3), [1, 2]),
+    ),
+    nums: (
+      (("1 2 3",), [1, 2, 3]),
+      (("1 2 3", None, float), [1.0, 2.0, 3.0]),
+      (("1, 2, 3", ', '), [1, 2, 3]),
+      (("1-1, 2-2, 3-3", [',', '-']), [[1,1], [2,2], [3,3]]),
+      (("1-1, 2-2, 3-3", [',', '-'], float), [[1.0,1.0], [2.0,2.0], [3.0,3.0]]),
+    ),
   }
   for func, func_tests in tqdm(tests.items(), f"Testing"):
     for test in tqdm(func_tests):
@@ -83,8 +89,8 @@ def test() -> None:
 
 def main(input_files: list[str]) -> None:
   test()
+  LOG.info("Tests completed successfully.")
   if CONFIG.tests_only:
-    LOG.info("Tests completed successfully.")
     exit(0)
   try:
     # results = {}
@@ -106,29 +112,46 @@ def parse_args():
   parser.add_argument('input_files', nargs='*', type=str)
   parser.add_argument('-t', '--tests-only', action='store_true')
   return parser.parse_args()
+                         
+#
+#  ▄▄    ▄▄               ██     ▄▄▄▄               
+#  ██    ██    ██         ▀▀     ▀▀██               
+#  ██    ██  ███████    ████       ██      ▄▄█████▄ 
+#  ██    ██    ██         ██       ██      ██▄▄▄▄ ▀ 
+#  ██    ██    ██         ██       ██       ▀▀▀▀██▄ 
+#  ▀██▄▄██▀    ██▄▄▄   ▄▄▄██▄▄▄    ██▄▄▄   █▄▄▄▄▄██ 
+#    ▀▀▀▀       ▀▀▀▀   ▀▀▀▀▀▀▀▀     ▀▀▀▀    ▀▀▀▀▀▀  
+#
 
+def nums(numbers: str, separator=None, func=int):
+  if isinstance(separator, list):
+    if len(separator) == 1:
+      return nums(numbers, separator[0], func=func)
+    splits = numbers.split(separator[0])
+    return [nums(split, separator[1:], func=func) for split in splits]
+  else:
+    return list(map(func, numbers.split(separator)))
+def ints(*args, **kwargs): return nums(*args, func=int, **kwargs)
+def floats(*args, **kwargs): return nums(*args, func=float, **kwargs)
 
-# TODO:
-#   - utils asciiart banner
-#   - parse numbers (int / float) w/ auto separator "ints"/"floats"
-#     - also write nested version intsn("1-2, 3-4, 5-6", [',', True]) -> [[1, 2], [3, 4], [5, 6]] generator (True for any non-digit separator)
+################################################################################
 
 if __name__ == '__main__':
   with logging_redirect_tqdm():
     CONFIG = parse_args()
     main(CONFIG.input_files)
 
+#   _______           _______  _______ _________ _______           _______  _______ _________
+#  (  ____ \|\     /|(  ____ \(  ___  )\__   __/(  ____ \|\     /|(  ____ \(  ____ \\__   __/
+#  | (    \/| )   ( || (    \/| (   ) |   ) (   | (    \/| )   ( || (    \/| (    \/   ) (
+#  | |      | (___) || (__    | (___) |   | |   | (_____ | (___) || (__    | (__       | |
+#  | |      |  ___  ||  __)   |  ___  |   | |   (_____  )|  ___  ||  __)   |  __)      | |
+#  | |      | (   ) || (      | (   ) |   | |         ) || (   ) || (      | (         | |
+#  | (____/\| )   ( || (____/\| )   ( |   | |   /\____) || )   ( || (____/\| (____/\   | |
+#  (_______/|/     \|(_______/|/     \|   )_(   \_______)|/     \|(_______/(_______/   )_(
+#
+
 r"""
- _______           _______  _______ _________ _______           _______  _______ _________
-(  ____ \|\     /|(  ____ \(  ___  )\__   __/(  ____ \|\     /|(  ____ \(  ____ \\__   __/
-| (    \/| )   ( || (    \/| (   ) |   ) (   | (    \/| )   ( || (    \/| (    \/   ) (
-| |      | (___) || (__    | (___) |   | |   | (_____ | (___) || (__    | (__       | |
-| |      |  ___  ||  __)   |  ___  |   | |   (_____  )|  ___  ||  __)   |  __)      | |
-| |      | (   ) || (      | (   ) |   | |         ) || (   ) || (      | (         | |
-| (____/\| )   ( || (____/\| )   ( |   | |   /\____) || )   ( || (____/\| (____/\   | |
-(_______/|/     \|(_______/|/     \|   )_(   \_______)|/     \|(_______/(_______/   )_(
-
-
 dataclass
 # https://docs.python.org/3/library/dataclasses.html
 # https://realpython.com/python-data-classes/
