@@ -1,0 +1,12 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tqdm = "*"
+
+[dev-packages]
+
+[requires]
+# Should work for python >=3.8, but that can't be specified https://github.com/pypa/pipenv/issues/1050
