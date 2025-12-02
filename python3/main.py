@@ -24,7 +24,7 @@ from math import *
 from pdb import set_trace as st
 from pprint import pp
 # import random
-# from time import sleep
+from time import sleep
 # import z3
 
 
@@ -41,6 +41,8 @@ logging.basicConfig(
 )
 LOG.setLevel(logging.DEBUG)
 
+CONFIG = None # will be generated via argparse
+
 
 def process(filename: str) -> Any:
   with open(filename, 'r') as fin:
@@ -56,7 +58,34 @@ def process(filename: str) -> Any:
         LOG.info(out)
       return None
 
+def test() -> None:
+  tests = {
+    # <function>: (test1, test2, ...)
+    lambda *args: list(range(*args)): (
+      # TODO: add tests here
+      ((1,), [0]),
+      ((1, 1), []),
+      ((1, 3), [1, 2]),
+    ),
+    int: (
+      # TODO: add tests here
+      (("4",), 4),
+    ),
+    # TODO: add tests for other functions here
+  }
+  for func, func_tests in tqdm(tests.items(), f"Testing"):
+    for test in tqdm(func_tests):
+      args, expected = test
+      actual = func(*args)
+      if actual != expected:
+        LOG.error(f"test failed: {args} -> {actual} != {expected}")
+        exit(1)
+
 def main(input_files: list[str]) -> None:
+  test()
+  if CONFIG.tests_only:
+    LOG.info("Tests completed successfully.")
+    exit(0)
   try:
     # results = {}
     for f in tqdm(input_files, 'process input files'):
@@ -75,20 +104,19 @@ def parse_args():
     description = CODING_CHALLENGE,
   )
   parser.add_argument('input_files', nargs='*', type=str)
+  parser.add_argument('-t', '--tests-only', action='store_true')
   return parser.parse_args()
 
 
 # TODO:
-#   - unittest setup
 #   - utils asciiart banner
 #   - parse numbers (int / float) w/ auto separator "ints"/"floats"
 #     - also write nested version intsn("1-2, 3-4, 5-6", [',', True]) -> [[1, 2], [3, 4], [5, 6]] generator (True for any non-digit separator)
 
 if __name__ == '__main__':
   with logging_redirect_tqdm():
-    config = parse_args()
-    input_files = config.input_files
-    main(input_files)
+    CONFIG = parse_args()
+    main(CONFIG.input_files)
 
 r"""
  _______           _______  _______ _________ _______           _______  _______ _________
