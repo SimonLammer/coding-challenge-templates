@@ -47,12 +47,12 @@ CONFIG = None # will be generated via argparse
 def process(filename: str) -> Any:
   with open(filename, 'r') as fin:
     with open(f'{".".join(filename.split(".")[:-1])}.out', 'w') as fout:
-      # Process a few lines manually here before looping line-by-line
+      # HERE: Process a few lines manually before looping line-by-line
       # n = int(next(fout))
       for line in tqdm(fin, f'{filename} lines'):
         line = line.rstrip()
 
-        # Process input file line-by-line here
+        # HERE: Process input file line-by-line
 
         out = f"{line}"
         fout.write(f"{out}\n")
@@ -63,10 +63,10 @@ def test() -> None:
   tests = {
     # <function>: (test1, test2, ...)
     int: (
-      # Add tests here
+      # HERE: Add tests
       (("4",), 4),
     ),
-    # Add tests for other functions here
+    # HERE: Add tests for other functions
     lambda *args: list(range(*args)): (
       ((1,), [0]),
       ((1, 3), [1, 2]),
