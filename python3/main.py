@@ -56,7 +56,7 @@ def process(filename: str) -> Any:
 
         out = f"{line}"
         fout.write(f"{out}\n")
-        LOG.info(out)
+        LOG.debug(out)
       return None
 
 def test() -> None:
@@ -72,19 +72,32 @@ def test() -> None:
       ((1, 3), [1, 2]),
     ),
     nums: (
+      (("123",), [123]),
+      (("123", ''), [1, 2, 3]),
+      (("1", ''), [1]),
       (("1 2 3",), [1, 2, 3]),
       (("1 2 3", None, float), [1.0, 2.0, 3.0]),
       (("1, 2, 3", ', '), [1, 2, 3]),
       (("1-1, 2-2, 3-3", [',', '-']), [[1,1], [2,2], [3,3]]),
       (("1-1, 2-2, 3-3", [',', '-'], float), [[1.0,1.0], [2.0,2.0], [3.0,3.0]]),
+      (("11,22,33", [',', '']), [[1,1], [2,2], [3,3]]),
     ),
   }
   for func, func_tests in tqdm(tests.items(), f"Testing"):
     for test in tqdm(func_tests):
-      args, expected = test
-      actual = func(*args)
-      if actual != expected:
-        LOG.error(f"test failed: {args} -> {actual} != {expected}")
+      try:
+        args, expected = test
+        if not isinstance(args, tuple):
+          LOG.error(f"Test arguments aren't a tuple! Did you forget a comma (e.g. '(123,)')? {test}")
+          exit(1)
+        actual = func(*args)
+        if actual != expected:
+          LOG.error(f"test failed: {args} -> {actual} != {expected}")
+          exit(1)
+      except SystemExit as e:
+        raise e
+      except:
+        LOG.error(f"test errored: {args}", exc_info=True)
         exit(1)
 
 def main(input_files: list[str]) -> None:
@@ -93,13 +106,13 @@ def main(input_files: list[str]) -> None:
   if CONFIG.tests_only:
     exit(0)
   try:
-    # results = {}
+    results = {}
     for f in tqdm(input_files, 'process input files'):
       LOG.critical(f"Processing {f}")
       res = process(f)
-      # results[f] = res
+      results[f] = res
       LOG.critical(f"Processed {f} -> {res}")
-    #pp(results)
+    pp(results)
   except KeyboardInterrupt as e:
     LOG.error(str(e), exc_info=True)
     exit(130)
@@ -130,7 +143,7 @@ def nums(numbers: str, separator=None, func=int):
     splits = numbers.split(separator[0])
     return [nums(split, separator[1:], func=func) for split in splits]
   else:
-    return list(map(func, numbers.split(separator)))
+    return list(map(func, numbers.split(separator) if separator != '' else numbers))
 def ints(*args, **kwargs): return nums(*args, func=int, **kwargs)
 def floats(*args, **kwargs): return nums(*args, func=float, **kwargs)
 
